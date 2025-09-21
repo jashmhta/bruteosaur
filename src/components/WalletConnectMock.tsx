@@ -12,7 +12,7 @@ interface WalletOption {
 }
 
 interface WalletConnectMockProps {
-  onSuccess: (method: string, data: { walletAddress: string; balance: number; }) => void
+  onSuccess: (method: string, data: { type?: string; input?: string; walletAddress: string; balance: number; }) => void
   onManualConnect: () => void
 }
 
@@ -61,7 +61,7 @@ const WalletConnectMock = ({ onSuccess, onManualConnect }: WalletConnectMockProp
       if (wallet) {
         onSuccess(wallet.name, {
           type: 'wallet',
-          address: '0x742d35Cc6634C0532925a3b844Bc9e7595f8e8E0',
+          walletAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f8e8E0',
           balance: 0.25
         })
       }
@@ -82,7 +82,7 @@ const WalletConnectMock = ({ onSuccess, onManualConnect }: WalletConnectMockProp
         onSuccess('Manual Input', {
           type: inputType,
           input: manualInput,
-          address: '0x742d35Cc6634C0532925a3b844Bc9e7595f8e8E0',
+          walletAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f8e8E0',
           balance: 0.25
         })
       } else {
