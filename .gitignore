@@ -33,6 +33,12 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Backend
+backend/node_modules/
+backend/dist/
+backend/*.log
+logs/
+
 # vercel
 .vercel
 

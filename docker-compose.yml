@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: bruteosaur-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: bruteosaur
+    volumes:
+      - mongodb_data:/data/db
+      - ./backend/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - bruteosaur-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bruteosaur-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://admin:password123@mongodb:27017/bruteosaur?authSource=admin
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      FRONTEND_URL: http://localhost:3000
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend/logs:/app/logs
+    networks:
+      - bruteosaur-network
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bruteosaur-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:5000
+    depends_on:
+      - backend
+    networks:
+      - bruteosaur-network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: bruteosaur-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - bruteosaur-network
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: bruteosaur-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - bruteosaur-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  bruteosaur-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
